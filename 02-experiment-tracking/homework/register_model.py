@@ -32,7 +32,8 @@ def train_and_log_model(data_path, params):
         for param in RF_PARAMS:
             new_params[param] = int(params[param])
 
-        rf = RandomForestRegressor(**new_params)
+        print(new_params)
+        rf = RandomForestRegressor(**new_params, n_jobs=1)
         rf.fit(X_train, y_train)
 
         # Evaluate model on the validation and test sets
@@ -67,14 +68,23 @@ def run_register_model(data_path: str, top_n: int):
         order_by=["metrics.rmse ASC"]
     )
     for run in runs:
+        print(run.data.params)
         train_and_log_model(data_path=data_path, params=run.data.params)
 
     # Select the model with the lowest test RMSE
     experiment = client.get_experiment_by_name(EXPERIMENT_NAME)
-    # best_run = client.search_runs( ...  )[0]
+    best_run = client.search_runs(
+        experiment_ids=experiment._experiment_id,
+        run_view_type=ViewType.ACTIVE_ONLY,
+        max_results=1,
+        order_by=["metrics.rmse ASC"]
+    )[0]
 
     # Register the best model
-    # mlflow.register_model( ... )
+    mlflow.register_model(
+        model_uri = f"runs:/{best_run.info.run_id}/model",
+        name = "duration_estimator"
+    )
 
 
 if __name__ == '__main__':
