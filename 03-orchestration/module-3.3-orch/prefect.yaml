@@ -1,0 +1,40 @@
+# Welcome to your prefect.yaml file! You can use this file for storing and managing
+# configuration for deploying your flows. We recommend committing this file to source
+# control along with your flow code.
+
+# Generic metadata about this project
+name: module-3.3-orch
+prefect-version: 3.4.7
+
+# build section allows you to manage and build docker images
+build: null
+
+# push section allows you to manage if and how this project is uploaded to remote locations
+push: null
+
+# pull section allows you to provide instructions for cloning this project in remote locations
+pull:
+- prefect.deployments.steps.set_working_directory:
+    directory: /workspaces/mlops-zoomcamp/03-orchestration/module-3.3-orch
+
+# the deployments section allows you to provide configuration for deploying flows
+deployments:
+- name: taxi-1
+  version: null
+  tags: []
+  concurrency_limit: null
+  description: null
+  entrypoint: duration-prediction.py:run
+  parameters: {}
+  work_pool:
+    name: module-03-pool
+    work_queue_name: null
+    job_variables: {}
+  schedules:
+  - cron: 0 16 1 * *
+    timezone: CET
+    day_or: true
+    active: false
+  # - rrule: 'FREQ=MONTHLY;DTSTART=2024-01-01T08:00:00+01:00;UNTIL=2024-06-01T08:00:00+02:00;BYMONTH=1,2,3,4,5,6;BYMONTHDAY=1' # this does not work
+    # timezone: CET
+    # active: false

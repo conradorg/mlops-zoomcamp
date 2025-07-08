@@ -11,6 +11,9 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
 import mlflow
+from prefect import flow, task
+from prefect.context import get_run_context
+from dateutil.relativedelta import relativedelta
 
 mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("nyc-taxi-experiment")
@@ -20,6 +23,7 @@ models_folder.mkdir(exist_ok=True)
 
 
 
+@task(retries=3, retry_delay_seconds=2)
 def read_dataframe(year, month):
     url = f'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet'
     df = pd.read_parquet(url)
@@ -37,6 +41,7 @@ def read_dataframe(year, month):
     return df
 
 
+@task
 def create_X(df, dv=None):
     categorical = ['PU_DO']
     numerical = ['trip_distance']
@@ -51,6 +56,7 @@ def create_X(df, dv=None):
     return X, dv
 
 
+@task(log_prints=True)
 def train_model(X_train, y_train, X_val, y_val, dv):
     with mlflow.start_run() as run:
         train = xgb.DMatrix(X_train, label=y_train)
@@ -89,7 +95,22 @@ def train_model(X_train, y_train, X_val, y_val, dv):
         return run.info.run_id
 
 
-def run(year, month):
+@flow
+def run(year: int = None, month: int = None):
+    
+    # added to tweak values for time from run_context (if not given as params) 
+    # - useful for backfilling
+    if year is None or month is None:
+        ctx = get_run_context()
+        ref_date = ctx.flow_run.expected_start_time - relativedelta(months=1)
+        year = ref_date.year
+        month = ref_date.month
+
+    # OVERWRITE: train data from two months ago should be used
+    month = month - 2 if month > 2 else 12 + month - 2
+    year = year if month > 2 else year - 1
+
+
     df_train = read_dataframe(year=year, month=month)
 
     next_year = year if month < 12 else year + 1
