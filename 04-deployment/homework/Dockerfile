@@ -11,6 +11,7 @@ RUN ls -al
 
 RUN pipenv install --system --deploy
 
+# !NEVER! copy the .env file into container, better provide the .env file when the container is run
 COPY ["starter.py", "."]
 
 # RUN pipenv run python starter.py

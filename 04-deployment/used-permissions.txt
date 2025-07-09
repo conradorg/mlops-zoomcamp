@@ -9,7 +9,7 @@
                 "s3:GetObject",
                 "s3:DeleteObject"
             ],
-            "Resource": "arn:aws:s3:::duration-prediction-result/*"
+            "Resource": "arn:aws:s3:::BUCKETNAME/*"
         }
     ]
 }
