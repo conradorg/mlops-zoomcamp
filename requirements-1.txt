@@ -7,3 +7,5 @@ mlflow
 hyperopt
 prefect
 xgboost
+psycopg
+evidently
